@@ -47,10 +47,10 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent">
 
-            <FrameLayout
-                android:id="@+id/contentFrame"
+            <com.example.android.architecture.blueprints.todoapp.tasks.TasksView
+                android:id="@+id/tasks_view"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent" />
+                android:layout_height="match_parent"/>
 
             <android.support.design.widget.FloatingActionButton
                 android:id="@+id/fab_add_task"
@@ -59,7 +59,7 @@
                 android:layout_margin="@dimen/fab_margin"
                 android:src="@drawable/ic_add"
                 app:fabSize="normal"
-                app:layout_anchor="@id/contentFrame"
+                app:layout_anchor="@id/tasks_view"
                 app:layout_anchorGravity="bottom|right|end" />
         </android.support.design.widget.CoordinatorLayout>
 

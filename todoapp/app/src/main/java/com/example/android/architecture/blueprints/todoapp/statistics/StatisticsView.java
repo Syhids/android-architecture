@@ -16,56 +16,58 @@
 
 package com.example.android.architecture.blueprints.todoapp.statistics;
 
-import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.v4.app.Fragment;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
+import android.content.Context;
+import android.util.AttributeSet;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.example.android.architecture.blueprints.todoapp.R;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 /**
  * Main UI for the statistics screen.
  */
-public class StatisticsFragment extends Fragment implements StatisticsContract.View {
+public class StatisticsView extends LinearLayout implements StatisticsContract.View {
 
     private TextView mStatisticsTV;
 
     private StatisticsContract.Presenter mPresenter;
 
-    public static StatisticsFragment newInstance() {
-        return new StatisticsFragment();
+    private boolean mActive;
+
+    public StatisticsView(Context context) {
+        super(context);
+        init();
+    }
+
+    public StatisticsView(Context context, AttributeSet attrs) {
+        super(context, attrs);
+        init();
+    }
+
+    private void init() {
+        setOrientation(VERTICAL);
+        inflate(getContext(), R.layout.statistics_view_content, this);
+        mStatisticsTV = (TextView) findViewById(R.id.statistics);
+
+        mActive = true;
     }
 
     @Override
-    public void setPresenter(@NonNull StatisticsContract.Presenter presenter) {
-        mPresenter = checkNotNull(presenter);
-    }
-
-    @Nullable
-    @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
-        View root = inflater.inflate(R.layout.statistics_frag, container, false);
-        mStatisticsTV = (TextView) root.findViewById(R.id.statistics);
-        return root;
+    protected void onAttachedToWindow() {
+        super.onAttachedToWindow();
+        mActive = true;
     }
 
     @Override
-    public void onResume() {
-        super.onResume();
-        mPresenter.start();
+    protected void onDetachedFromWindow() {
+        super.onDetachedFromWindow();
+        mActive = false;
     }
 
     @Override
     public void setProgressIndicator(boolean active) {
         if (active) {
-            mStatisticsTV.setText(getString(R.string.loading));
+            mStatisticsTV.setText(getResources().getString(R.string.loading));
         } else {
             mStatisticsTV.setText("");
         }
@@ -90,6 +92,11 @@ public class StatisticsFragment extends Fragment implements StatisticsContract.V
 
     @Override
     public boolean isActive() {
-        return isAdded();
+        return mActive;
+    }
+
+    @Override
+    public void setPresenter(StatisticsContract.Presenter presenter) {
+        mPresenter = presenter;
     }
 }

@@ -16,24 +16,34 @@
 
 package com.example.android.architecture.blueprints.todoapp.taskdetail;
 
+import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.VisibleForTesting;
+import android.support.design.widget.FloatingActionButton;
 import android.support.test.espresso.IdlingResource;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
 
 import com.example.android.architecture.blueprints.todoapp.Injection;
 import com.example.android.architecture.blueprints.todoapp.R;
-import com.example.android.architecture.blueprints.todoapp.util.ActivityUtils;
 import com.example.android.architecture.blueprints.todoapp.util.EspressoIdlingResource;
 
-/**
- * Displays task details screen.
- */
+import static com.google.common.base.Preconditions.checkNotNull;
+
 public class TaskDetailActivity extends AppCompatActivity {
 
     public static final String EXTRA_TASK_ID = "TASK_ID";
+
+    public static final String ARGUMENT_TASK_ID = "TASK_ID";
+
+    public static final int REQUEST_EDIT_TASK = 1;
+
+    private TaskDetailPresenter mPresenter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,21 +61,59 @@ public class TaskDetailActivity extends AppCompatActivity {
         // Get the requested task id
         String taskId = getIntent().getStringExtra(EXTRA_TASK_ID);
 
-        TaskDetailFragment taskDetailFragment = (TaskDetailFragment) getSupportFragmentManager()
-                .findFragmentById(R.id.contentFrame);
+        // Set up floating action button
+        FloatingActionButton fab =
+                (FloatingActionButton) findViewById(R.id.fab_edit_task);
+        checkNotNull(fab, "fab not found in layout");
 
-        if (taskDetailFragment == null) {
-            taskDetailFragment = TaskDetailFragment.newInstance(taskId);
+        fab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mPresenter.editTask();
+            }
+        });
 
-            ActivityUtils.addFragmentToActivity(getSupportFragmentManager(),
-                    taskDetailFragment, R.id.contentFrame);
-        }
+        TaskDetailView taskDetailView = (TaskDetailView) findViewById(R.id.task_detail_view);
+        checkNotNull(taskDetailView, "taskDetailView not found in layout");
 
         // Create the presenter
-        new TaskDetailPresenter(
+        mPresenter = new TaskDetailPresenter(
                 taskId,
                 Injection.provideTasksRepository(getApplicationContext()),
-                taskDetailFragment);
+                taskDetailView);
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == REQUEST_EDIT_TASK) {
+            // If the task was edited successfully, go back to the list.
+            if (resultCode == Activity.RESULT_OK) {
+                finish();
+            }
+        }
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.taskdetail_fragment_menu, menu);
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.menu_delete:
+                mPresenter.deleteTask();
+                return true;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        mPresenter.start();
     }
 
     @Override

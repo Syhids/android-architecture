@@ -29,7 +29,8 @@ import android.view.MenuItem;
 import com.example.android.architecture.blueprints.todoapp.Injection;
 import com.example.android.architecture.blueprints.todoapp.R;
 import com.example.android.architecture.blueprints.todoapp.tasks.TasksActivity;
-import com.example.android.architecture.blueprints.todoapp.util.ActivityUtils;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Show statistics for tasks.
@@ -37,6 +38,8 @@ import com.example.android.architecture.blueprints.todoapp.util.ActivityUtils;
 public class StatisticsActivity extends AppCompatActivity {
 
     private DrawerLayout mDrawerLayout;
+
+    private StatisticsPresenter mStatisticsPresenter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,16 +63,17 @@ public class StatisticsActivity extends AppCompatActivity {
             setupDrawerContent(navigationView);
         }
 
-        StatisticsFragment statisticsFragment = (StatisticsFragment) getSupportFragmentManager()
-                .findFragmentById(R.id.contentFrame);
-        if (statisticsFragment == null) {
-            statisticsFragment = StatisticsFragment.newInstance();
-            ActivityUtils.addFragmentToActivity(getSupportFragmentManager(),
-                    statisticsFragment, R.id.contentFrame);
-        }
+        StatisticsView statisticsView = (StatisticsView) findViewById(R.id.statistics_view);
+        checkNotNull(statisticsView, "statisticsView not found in layout");
 
-        new StatisticsPresenter(
-                Injection.provideTasksRepository(getApplicationContext()), statisticsFragment);
+        mStatisticsPresenter = new StatisticsPresenter(
+                Injection.provideTasksRepository(getApplicationContext()), statisticsView);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        mStatisticsPresenter.start();
     }
 
     @Override

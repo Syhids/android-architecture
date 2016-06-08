@@ -16,19 +16,17 @@
 
 package com.example.android.architecture.blueprints.todoapp.tasks;
 
+import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
-import android.os.Bundle;
 import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.design.widget.FloatingActionButton;
+import android.support.annotation.StringRes;
 import android.support.design.widget.Snackbar;
-import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.PopupMenu;
+import android.util.AttributeSet;
 import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
@@ -47,16 +45,17 @@ import com.example.android.architecture.blueprints.todoapp.taskdetail.TaskDetail
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.example.android.architecture.blueprints.todoapp.util.ActivityUtils.getActivity;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Display a grid of {@link Task}s. User can choose to view all, active or completed tasks.
  */
-public class TasksFragment extends Fragment implements TasksContract.View {
+public class TasksView extends ScrollChildSwipeRefreshLayout implements TasksContract.View {
 
     private TasksContract.Presenter mPresenter;
 
-    private TasksAdapter mListAdapter;
+    private TasksView.TasksAdapter mListAdapter;
 
     private View mNoTasksView;
 
@@ -70,53 +69,34 @@ public class TasksFragment extends Fragment implements TasksContract.View {
 
     private TextView mFilteringLabelView;
 
-    public TasksFragment() {
-        // Requires empty public constructor
+    private boolean mActive;
+
+    public TasksView(Context context) {
+        super(context);
+        init();
     }
 
-    public static TasksFragment newInstance() {
-        return new TasksFragment();
+    public TasksView(Context context, AttributeSet attrs) {
+        super(context, attrs);
+        init();
     }
 
-    @Override
-    public void onCreate(@Nullable Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        mListAdapter = new TasksAdapter(new ArrayList<Task>(0), mItemListener);
-    }
+    private void init() {
+        inflate(getContext(), R.layout.tasks_view_content, this);
 
-    @Override
-    public void onResume() {
-        super.onResume();
-        mPresenter.start();
-    }
-
-    @Override
-    public void setPresenter(@NonNull TasksContract.Presenter presenter) {
-        mPresenter = checkNotNull(presenter);
-    }
-
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        mPresenter.result(requestCode, resultCode);
-    }
-
-    @Nullable
-    @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
-        View root = inflater.inflate(R.layout.tasks_frag, container, false);
+        mListAdapter = new TasksView.TasksAdapter(new ArrayList<Task>(0), mItemListener);
 
         // Set up tasks view
-        ListView listView = (ListView) root.findViewById(R.id.tasks_list);
+        ListView listView = (ListView) findViewById(R.id.tasks_list);
         listView.setAdapter(mListAdapter);
-        mFilteringLabelView = (TextView) root.findViewById(R.id.filteringLabel);
-        mTasksView = (LinearLayout) root.findViewById(R.id.tasksLL);
+        mFilteringLabelView = (TextView) findViewById(R.id.filteringLabel);
+        mTasksView = (LinearLayout) findViewById(R.id.tasksLL);
 
-        // Set up  no tasks view
-        mNoTasksView = root.findViewById(R.id.noTasks);
-        mNoTaskIcon = (ImageView) root.findViewById(R.id.noTasksIcon);
-        mNoTaskMainView = (TextView) root.findViewById(R.id.noTasksMain);
-        mNoTaskAddView = (TextView) root.findViewById(R.id.noTasksAdd);
+        // Set up no tasks view
+        mNoTasksView = findViewById(R.id.noTasks);
+        mNoTaskIcon = (ImageView) findViewById(R.id.noTasksIcon);
+        mNoTaskMainView = (TextView) findViewById(R.id.noTasksMain);
+        mNoTaskAddView = (TextView) findViewById(R.id.noTasksAdd);
         mNoTaskAddView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -124,25 +104,12 @@ public class TasksFragment extends Fragment implements TasksContract.View {
             }
         });
 
-        // Set up floating action button
-        FloatingActionButton fab =
-                (FloatingActionButton) getActivity().findViewById(R.id.fab_add_task);
-
-        fab.setImageResource(R.drawable.ic_add);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                mPresenter.addNewTask();
-            }
-        });
-
         // Set up progress indicator
-        final ScrollChildSwipeRefreshLayout swipeRefreshLayout =
-                (ScrollChildSwipeRefreshLayout) root.findViewById(R.id.refresh_layout);
+        final ScrollChildSwipeRefreshLayout swipeRefreshLayout = this;
         swipeRefreshLayout.setColorSchemeColors(
-                ContextCompat.getColor(getActivity(), R.color.colorPrimary),
-                ContextCompat.getColor(getActivity(), R.color.colorAccent),
-                ContextCompat.getColor(getActivity(), R.color.colorPrimaryDark)
+                ContextCompat.getColor(getContext(), R.color.colorPrimary),
+                ContextCompat.getColor(getContext(), R.color.colorAccent),
+                ContextCompat.getColor(getContext(), R.color.colorPrimaryDark)
         );
         // Set the scrolling view in the custom SwipeRefreshLayout.
         swipeRefreshLayout.setScrollUpChild(listView);
@@ -154,56 +121,12 @@ public class TasksFragment extends Fragment implements TasksContract.View {
             }
         });
 
-        setHasOptionsMenu(true);
-
-        return root;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.menu_clear:
-                mPresenter.clearCompletedTasks();
-                break;
-            case R.id.menu_filter:
-                showFilteringPopUpMenu();
-                break;
-            case R.id.menu_refresh:
-                mPresenter.loadTasks(true);
-                break;
-        }
-        return true;
-    }
-
-    @Override
-    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-        inflater.inflate(R.menu.tasks_fragment_menu, menu);
-    }
-
-    @Override
-    public void showFilteringPopUpMenu() {
-        PopupMenu popup = new PopupMenu(getContext(), getActivity().findViewById(R.id.menu_filter));
-        popup.getMenuInflater().inflate(R.menu.filter_tasks, popup.getMenu());
-
-        popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
-            public boolean onMenuItemClick(MenuItem item) {
-                switch (item.getItemId()) {
-                    case R.id.active:
-                        mPresenter.setFiltering(TasksFilterType.ACTIVE_TASKS);
-                        break;
-                    case R.id.completed:
-                        mPresenter.setFiltering(TasksFilterType.COMPLETED_TASKS);
-                        break;
-                    default:
-                        mPresenter.setFiltering(TasksFilterType.ALL_TASKS);
-                        break;
-                }
-                mPresenter.loadTasks(false);
-                return true;
-            }
-        });
-
-        popup.show();
+        /*
+         * TODO:
+         * This is correct with the actual implementation because the view passed to the presenter
+         * is already attached to an Activity
+         */
+        mActive = true;
     }
 
     /**
@@ -227,13 +150,34 @@ public class TasksFragment extends Fragment implements TasksContract.View {
     };
 
     @Override
-    public void setLoadingIndicator(final boolean active) {
+    public void showFilteringPopUpMenu() {
+        PopupMenu popup = new PopupMenu(getContext(), getRootView().findViewById(R.id.menu_filter));
+        popup.getMenuInflater().inflate(R.menu.filter_tasks, popup.getMenu());
 
-        if (getView() == null) {
-            return;
-        }
-        final SwipeRefreshLayout srl =
-                (SwipeRefreshLayout) getView().findViewById(R.id.refresh_layout);
+        popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+            public boolean onMenuItemClick(MenuItem item) {
+                switch (item.getItemId()) {
+                    case R.id.active:
+                        mPresenter.setFiltering(TasksFilterType.ACTIVE_TASKS);
+                        break;
+                    case R.id.completed:
+                        mPresenter.setFiltering(TasksFilterType.COMPLETED_TASKS);
+                        break;
+                    default:
+                        mPresenter.setFiltering(TasksFilterType.ALL_TASKS);
+                        break;
+                }
+                mPresenter.loadTasks(false);
+                return true;
+            }
+        });
+
+        popup.show();
+    }
+
+    @Override
+    public void setLoadingIndicator(final boolean active) {
+        final SwipeRefreshLayout srl = this;
 
         // Make sure setRefreshing() is called after the layout is done with everything else.
         srl.post(new Runnable() {
@@ -344,12 +288,34 @@ public class TasksFragment extends Fragment implements TasksContract.View {
     }
 
     private void showMessage(String message) {
-        Snackbar.make(getView(), message, Snackbar.LENGTH_LONG).show();
+        Snackbar.make(this, message, Snackbar.LENGTH_LONG).show();
     }
 
     @Override
     public boolean isActive() {
-        return isAdded();
+        return mActive;
+    }
+
+    @Override
+    protected void onAttachedToWindow() {
+        super.onAttachedToWindow();
+        mActive = true;
+    }
+
+    @Override
+    protected void onDetachedFromWindow() {
+        super.onDetachedFromWindow();
+        mActive = false;
+    }
+
+    private void startActivity(Intent intent) {
+        Activity activity = getActivity(this);
+        activity.startActivity(intent);
+    }
+
+    private void startActivityForResult(Intent intent, int requestCode) {
+        Activity activity = getActivity(this);
+        activity.startActivityForResult(intent, requestCode);
     }
 
     private static class TasksAdapter extends BaseAdapter {
@@ -442,4 +408,12 @@ public class TasksFragment extends Fragment implements TasksContract.View {
         void onActivateTaskClick(Task activatedTask);
     }
 
+    @Override
+    public void setPresenter(@NonNull TasksContract.Presenter presenter) {
+        mPresenter = checkNotNull(presenter);
+    }
+
+    private String getString(@StringRes int resId) {
+        return getContext().getString(resId);
+    }
 }

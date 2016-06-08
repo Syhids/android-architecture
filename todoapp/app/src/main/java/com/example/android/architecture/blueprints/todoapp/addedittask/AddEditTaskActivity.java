@@ -18,15 +18,18 @@ package com.example.android.architecture.blueprints.todoapp.addedittask;
 
 import android.os.Bundle;
 import android.support.annotation.VisibleForTesting;
+import android.support.design.widget.FloatingActionButton;
 import android.support.test.espresso.IdlingResource;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.view.View;
 
 import com.example.android.architecture.blueprints.todoapp.Injection;
 import com.example.android.architecture.blueprints.todoapp.R;
-import com.example.android.architecture.blueprints.todoapp.util.ActivityUtils;
 import com.example.android.architecture.blueprints.todoapp.util.EspressoIdlingResource;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Displays an add or edit task screen.
@@ -34,6 +37,10 @@ import com.example.android.architecture.blueprints.todoapp.util.EspressoIdlingRe
 public class AddEditTaskActivity extends AppCompatActivity {
 
     public static final int REQUEST_ADD_TASK = 1;
+
+    public static final String ARGUMENT_EDIT_TASK_ID = "EDIT_TASK_ID";
+
+    private AddEditTaskPresenter mPresenter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,36 +51,48 @@ public class AddEditTaskActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         ActionBar actionBar = getSupportActionBar();
+        checkNotNull(actionBar, "actionBar cannot be null");
         actionBar.setDisplayHomeAsUpEnabled(true);
         actionBar.setDisplayShowHomeEnabled(true);
 
-        AddEditTaskFragment addEditTaskFragment =
-                (AddEditTaskFragment) getSupportFragmentManager().findFragmentById(R.id.contentFrame);
+        final AddEditTaskView addEditTaskView =
+                (AddEditTaskView) findViewById(R.id.add_edit_task_view);
+        checkNotNull(addEditTaskView, "addEditTaskView not found in layout");
+
+        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab_edit_task_done);
+        checkNotNull(fab, "fab not found in layout");
+        fab.setImageResource(R.drawable.ic_done);
+        fab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                /*
+                 * TODO:
+                 * View listeners should simply report the event to the presenter.
+                 * In this case: mPresenter.onSavePressed()
+                 */
+                mPresenter.saveTask(addEditTaskView.getTitle(), addEditTaskView.getDescription());
+            }
+        });
 
         String taskId = null;
-        if (addEditTaskFragment == null) {
-            addEditTaskFragment = AddEditTaskFragment.newInstance();
 
-            if (getIntent().hasExtra(AddEditTaskFragment.ARGUMENT_EDIT_TASK_ID)) {
-                taskId = getIntent().getStringExtra(
-                        AddEditTaskFragment.ARGUMENT_EDIT_TASK_ID);
-                actionBar.setTitle(R.string.edit_task);
-                Bundle bundle = new Bundle();
-                bundle.putString(AddEditTaskFragment.ARGUMENT_EDIT_TASK_ID, taskId);
-                addEditTaskFragment.setArguments(bundle);
-            } else {
-                actionBar.setTitle(R.string.add_task);
-            }
-
-            ActivityUtils.addFragmentToActivity(getSupportFragmentManager(),
-                    addEditTaskFragment, R.id.contentFrame);
+        if (getIntent().hasExtra(ARGUMENT_EDIT_TASK_ID)) {
+            taskId = getIntent().getStringExtra(ARGUMENT_EDIT_TASK_ID);
+            actionBar.setTitle(R.string.edit_task);
+        } else {
+            actionBar.setTitle(R.string.add_task);
         }
 
-        // Create the presenter
-        new AddEditTaskPresenter(
+        mPresenter = new AddEditTaskPresenter(
                 taskId,
                 Injection.provideTasksRepository(getApplicationContext()),
-                addEditTaskFragment);
+                addEditTaskView);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        mPresenter.start();
     }
 
     @Override

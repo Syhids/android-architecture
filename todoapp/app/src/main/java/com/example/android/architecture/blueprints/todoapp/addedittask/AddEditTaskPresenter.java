@@ -25,7 +25,7 @@ import com.example.android.architecture.blueprints.todoapp.data.source.TasksData
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * Listens to user actions from the UI ({@link AddEditTaskFragment}), retrieves the data and updates
+ * Listens to user actions from the UI ({@link AddEditTaskView}), retrieves the data and updates
  * the UI as required.
  */
 public class AddEditTaskPresenter implements AddEditTaskContract.Presenter,

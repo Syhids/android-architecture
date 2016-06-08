@@ -28,7 +28,7 @@ import java.util.List;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * Listens to user actions from the UI ({@link StatisticsFragment}), retrieves the data and updates
+ * Listens to user actions from the UI ({@link StatisticsView}), retrieves the data and updates
  * the UI as required.
  */
 public class StatisticsPresenter implements StatisticsContract.Presenter {

@@ -26,7 +26,7 @@ import com.example.android.architecture.blueprints.todoapp.data.source.TasksRepo
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * Listens to user actions from the UI ({@link TaskDetailFragment}), retrieves the data and updates
+ * Listens to user actions from the UI ({@link TaskDetailView}), retrieves the data and updates
  * the UI as required.
  */
 public class TaskDetailPresenter implements TaskDetailContract.Presenter {

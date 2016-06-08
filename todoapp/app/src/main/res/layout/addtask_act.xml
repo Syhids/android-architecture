@@ -46,8 +46,8 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent">
 
-            <FrameLayout
-                android:id="@+id/contentFrame"
+            <com.example.android.architecture.blueprints.todoapp.addedittask.AddEditTaskView
+                android:id="@+id/add_edit_task_view"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent" />
 
@@ -58,7 +58,7 @@
                 android:layout_margin="@dimen/fab_margin"
                 android:src="@drawable/ic_add"
                 app:fabSize="normal"
-                app:layout_anchor="@id/contentFrame"
+                app:layout_anchor="@id/add_edit_task_view"
                 app:layout_anchorGravity="bottom|right|end" />
         </android.support.design.widget.CoordinatorLayout>
 
