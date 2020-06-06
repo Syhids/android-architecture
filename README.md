@@ -1,3 +1,7 @@
+# Purpose of this fork
+This is the fragmentless variation contributed to the old Android Architecture Blueprints
+https://github.com/Syhids/android-architecture/tree/todo-mvp-fragmentless
+
 # Android Architecture Blueprints [beta]
 
 [![Join the chat at https://gitter.im/googlesamples/android-architecture](https://badges.gitter.im/googlesamples/android-architecture.svg)](https://gitter.im/googlesamples/android-architecture?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
